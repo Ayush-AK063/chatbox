@@ -1,0 +1,109 @@
+import express from 'express';
+import dotenv from 'dotenv';
+import { GoogleGenAI } from '@google/genai';
+import { fileURLToPath } from 'url';  // To resolve __dirname in ES Modules
+import { dirname, join } from 'path'; // To resolve __dirname and join paths
+
+// Resolve __dirname in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load environment variables
+dotenv.config();
+
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+// Function to run the chat and get a response
+async function runChat(userInput) {
+  try {
+    // Define chat history and model configuration
+    const history = [
+      {
+        role: "user",
+        parts: [{text: "You are Ashish, a friendly assistant who works for InfixMart. InfixMart is a website and brand that sells Tech products which is trending in India. Your job is to capture user's name and email address. Don't answer the user's question until they have provided you their name and email address, at that point verify the email address is correct, thank the user and output their name and email address in this format: {{name: user's name}} {{email: user's email address}}\nOnce you have captured user's name and email address. Answer user's questions related to InfixMart.\nInfixMart's website URL is: https://infixmart.com website."}],
+      },
+      {
+        role: "model",
+        parts: [{ text: "Hello! Welcome to InfixMart. My name is Ashish. What's your name?" }],
+      },
+      {
+        role: "user",
+        parts: [{ text: 'Hii'}],
+      },
+      {
+        role: "model",
+        parts: [{ text: "Hi there! Thanks for reaching out to InfixMart. Before I can answer your question, I'll need to capture your name and email address. Can you please provide that information?" }],
+      },
+    ];
+
+    const generationConfig = {
+      temperature: 0.9,
+      topK: 1,
+      topP: 1,
+      maxOutputTokens: 1000,
+    };
+
+    const safetySettings = [
+      {
+        category: "HARM_CATEGORY_HARASSMENT", // Adjust as per available constants
+        threshold: "BLOCK_MEDIUM_AND_ABOVE", // Adjust based on settings
+      },
+      // Add more safety settings if needed
+    ];
+
+    // Generate content using the provided settings
+    const result = await ai.models.generateContent({
+      model: "gemini-2.0-flash", // Ensure this matches the model you intend to use
+      contents: userInput, // Use the user input for dynamic responses
+      history: history, // Include chat history
+      generationConfig: generationConfig,
+      safetySettings: safetySettings,
+    });
+
+    const response = result.text; // Extracting the response from the result
+    return response;
+  } catch (error) {
+    console.error("Error in generating content:", error);
+    throw new Error("Failed to fetch content from the model.");
+  }
+}
+
+// Create Express app
+const app = express();
+const port = process.env.PORT || 3000;
+
+// Middleware to parse JSON bodies
+app.use(express.json());
+
+// Serve static files like index.html and loader.gif
+app.get("/", (req, res) => {
+  res.sendFile(join(__dirname, 'index.html'));
+});
+
+app.get("/loader.gif", (req, res) => {
+  res.sendFile(join(__dirname, 'loader.gif'));
+});
+
+// Chat endpoint to receive user input and return a response
+app.post("/chat", async (req, res) => {
+  try {
+    const userInput = req.body?.userInput;
+    console.log("Incoming /chat request:", userInput);
+
+    if (!userInput) {
+      return res.status(400).json({ error: "Invalid request body" });
+    }
+
+    // Get the response from Google Gemini AI
+    const response = await runChat(userInput);
+    res.json({ response });
+  } catch (error) {
+    console.error("Error in chat endpoint:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// Start the server
+app.listen(port, () => {
+  console.log(`Server listening on port ${port}`);
+});
