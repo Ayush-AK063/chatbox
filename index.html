@@ -153,9 +153,19 @@
         });
 
         const data = await response.json();
-        console.log(data)
+        console.log('Full response data:', data);
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Server error');
+        }
+        
         const botMessage = data.response;
-        console.log(botMessage)
+        console.log('Bot message:', botMessage);
+        
+        if (!botMessage) {
+          throw new Error('No response from server');
+        }
+        
         // Add chat message to the chat history
         chatHistory.innerHTML += `<div class="user-message">${userMessage}</div>`;
         chatHistory.innerHTML += `<div class="bot-message">${botMessage}</div>`;
@@ -164,7 +174,10 @@
         chatHistory.scrollTop = chatHistory.scrollHeight;
       } catch (error) {
         console.error('Error:', error);
-        // Handle errors gracefully, e.g., display an error message to the user
+        // Add error message to chat
+        chatHistory.innerHTML += `<div class="user-message">${userMessage}</div>`;
+        chatHistory.innerHTML += `<div class="bot-message" style="color: red;">Error: ${error.message}</div>`;
+        chatHistory.scrollTop = chatHistory.scrollHeight;
       }
     }
 

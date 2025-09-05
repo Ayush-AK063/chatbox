@@ -65,8 +65,16 @@ async function runChat(userInput) {
 
     // Send the user input and get response
     const result = await chat.sendMessage(userInput);
+    console.log("Full result object:", JSON.stringify(result, null, 2));
 
-    const response = result.response.text(); // Extracting the response from the result
+    // Extract the response text properly
+    const response = result.response.text();
+    console.log("Generated response:", response);
+    
+    if (!response) {
+      throw new Error("Empty response from AI model");
+    }
+    
     return response;
   } catch (error) {
     console.error("Error in generating content:", error);
@@ -114,10 +122,15 @@ app.post("/chat", async (req, res) => {
 
     // Get the response from Google Gemini AI
     const response = await runChat(userInput);
+    console.log("Sending response to client:", response);
     res.json({ response });
   } catch (error) {
     console.error("Error in chat endpoint:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({ 
+      error: "Internal Server Error", 
+      details: error.message,
+      response: "Sorry, I'm having trouble responding right now. Please try again later."
+    });
   }
 });
 
