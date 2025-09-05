@@ -142,19 +142,14 @@
     async function sendMessage() {
       const userMessage = userInput.value;
       userInput.value = ''; // Clear input field
-      console.log(userMessage)
+      console.log('User message:', userMessage);
+      
+      // Add user message to chat immediately
+      chatHistory.innerHTML += `<div class="user-message">${userMessage}</div>`;
+      chatHistory.scrollTop = chatHistory.scrollHeight;
+      
       try {
-        // First test the server
-        const testResponse = await fetch('/test', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({}),
-        });
-        
-        const testData = await testResponse.json();
-        console.log('Test response:', testData);
+        console.log('Sending request to /chat with message:', userMessage);
         
         const response = await fetch('/chat', {
           method: 'POST',
@@ -163,6 +158,9 @@
           },
           body: JSON.stringify({ userInput: userMessage }),
         });
+        
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
 
         const data = await response.json();
         console.log('Full response data:', data);
@@ -178,8 +176,7 @@
           throw new Error('No response from server');
         }
         
-        // Add chat message to the chat history
-        chatHistory.innerHTML += `<div class="user-message">${userMessage}</div>`;
+        // Add bot message to the chat history
         chatHistory.innerHTML += `<div class="bot-message">${botMessage}</div>`;
 
         // Scroll to the bottom of the chat history
@@ -187,7 +184,6 @@
       } catch (error) {
         console.error('Error:', error);
         // Add error message to chat
-        chatHistory.innerHTML += `<div class="user-message">${userMessage}</div>`;
         chatHistory.innerHTML += `<div class="bot-message" style="color: red;">Error: ${error.message}</div>`;
         chatHistory.scrollTop = chatHistory.scrollHeight;
       }

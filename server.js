@@ -151,8 +151,9 @@ app.post("/chat", async (req, res) => {
     console.log("API_KEY exists:", !!process.env.API_KEY);
     
     if (!process.env.API_KEY) {
+      console.log("API_KEY not found, returning fallback response");
       return res.json({ 
-        response: "Hello! I'm working, but the API key is not configured. Please check your environment variables."
+        response: "Hello! I'm working, but the API key is not configured. Please check your environment variables in Vercel."
       });
     }
 
