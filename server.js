@@ -127,6 +127,16 @@ app.get("/loader.gif", (req, res) => {
   res.sendFile(join(__dirname, 'loader.gif'));
 });
 
+// Test endpoint to check if server is working
+app.post("/test", (req, res) => {
+  console.log("Test endpoint called");
+  res.json({ 
+    message: "Server is working!", 
+    timestamp: new Date().toISOString(),
+    apiKeyExists: !!process.env.API_KEY
+  });
+});
+
 // Chat endpoint to receive user input and return a response
 app.post("/chat", async (req, res) => {
   try {
@@ -135,6 +145,15 @@ app.post("/chat", async (req, res) => {
 
     if (!userInput) {
       return res.status(400).json({ error: "Invalid request body" });
+    }
+
+    // For now, return a simple response to test if the endpoint works
+    console.log("API_KEY exists:", !!process.env.API_KEY);
+    
+    if (!process.env.API_KEY) {
+      return res.json({ 
+        response: "Hello! I'm working, but the API key is not configured. Please check your environment variables."
+      });
     }
 
     // Get the response from Google Gemini AI

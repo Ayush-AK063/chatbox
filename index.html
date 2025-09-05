@@ -144,6 +144,18 @@
       userInput.value = ''; // Clear input field
       console.log(userMessage)
       try {
+        // First test the server
+        const testResponse = await fetch('/test', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({}),
+        });
+        
+        const testData = await testResponse.json();
+        console.log('Test response:', testData);
+        
         const response = await fetch('/chat', {
           method: 'POST',
           headers: {
