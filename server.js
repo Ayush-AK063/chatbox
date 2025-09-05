@@ -11,11 +11,24 @@ const __dirname = dirname(__filename);
 // Load environment variables
 dotenv.config();
 
+console.log("Environment check:");
+console.log("NODE_ENV:", process.env.NODE_ENV);
+console.log("API_KEY exists:", !!process.env.API_KEY);
+console.log("API_KEY length:", process.env.API_KEY ? process.env.API_KEY.length : 0);
+
+if (!process.env.API_KEY) {
+  console.error("ERROR: API_KEY environment variable is not set!");
+  throw new Error("API_KEY environment variable is required");
+}
+
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 // Function to run the chat and get a response
 async function runChat(userInput) {
   try {
+    console.log("Starting runChat with input:", userInput);
+    console.log("API_KEY exists:", !!process.env.API_KEY);
+    
     // Define chat history and model configuration
     const history = [
       {
@@ -77,8 +90,12 @@ async function runChat(userInput) {
     
     return response;
   } catch (error) {
-    console.error("Error in generating content:", error);
-    throw new Error("Failed to fetch content from the model.");
+    console.error("Error in generating content:");
+    console.error("Error name:", error.name);
+    console.error("Error message:", error.message);
+    console.error("Error stack:", error.stack);
+    console.error("Full error object:", JSON.stringify(error, null, 2));
+    throw new Error(`Failed to fetch content from the model: ${error.message}`);
   }
 }
 
