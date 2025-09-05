@@ -51,16 +51,22 @@ async function runChat(userInput) {
       // Add more safety settings if needed
     ];
 
-    // Generate content using the provided settings
-    const result = await ai.models.generateContent({
-      model: "gemini-2.0-flash", // Ensure this matches the model you intend to use
-      contents: userInput, // Use the user input for dynamic responses
-      history: history, // Include chat history
+    // Get the model
+    const model = ai.getGenerativeModel({ 
+      model: "gemini-2.0-flash",
       generationConfig: generationConfig,
       safetySettings: safetySettings,
     });
 
-    const response = result.text; // Extracting the response from the result
+    // Start a chat session with history
+    const chat = model.startChat({
+      history: history,
+    });
+
+    // Send the user input and get response
+    const result = await chat.sendMessage(userInput);
+
+    const response = result.response.text(); // Extracting the response from the result
     return response;
   } catch (error) {
     console.error("Error in generating content:", error);
@@ -74,6 +80,18 @@ const port = process.env.PORT || 3000;
 
 // Middleware to parse JSON bodies
 app.use(express.json());
+
+// CORS middleware
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
 
 // Serve static files like index.html and loader.gif
 app.get("/", (req, res) => {
