@@ -141,6 +141,52 @@ app.get("/diag", async (req, res) => {
   }
 });
 
+// Deeper diagnostics using raw REST calls to v1 and v1beta
+app.get("/diag2", async (req, res) => {
+  try {
+    const key = process.env.API_KEY || "";
+    const payload = {
+      contents: [
+        { parts: [{ text: "ping" }] }
+      ]
+    };
+
+    const headers = {
+      "Content-Type": "application/json"
+    };
+
+    // v1
+    const v1Url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(key)}`;
+    let v1Result, v1Status;
+    try {
+      const r = await fetch(v1Url, { method: 'POST', headers, body: JSON.stringify(payload) });
+      v1Status = r.status;
+      v1Result = await r.text();
+    } catch (e) {
+      v1Result = `fetch_error: ${e?.message}`;
+    }
+
+    // v1beta
+    const v1bUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(key)}`;
+    let v1bResult, v1bStatus;
+    try {
+      const r = await fetch(v1bUrl, { method: 'POST', headers, body: JSON.stringify(payload) });
+      v1bStatus = r.status;
+      v1bResult = await r.text();
+    } catch (e) {
+      v1bResult = `fetch_error: ${e?.message}`;
+    }
+
+    res.json({
+      keyLen: key.length,
+      v1: { status: v1Status, body: v1Result?.slice(0, 5000) },
+      v1beta: { status: v1bStatus, body: v1bResult?.slice(0, 5000) }
+    });
+  } catch (e) {
+    res.status(500).json({ error: 'diag2_failed', message: e?.message });
+  }
+});
+
 // Test endpoint to check if server is working
 app.post("/test", (req, res) => {
   console.log("Test endpoint called");
