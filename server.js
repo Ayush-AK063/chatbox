@@ -150,6 +150,14 @@ app.post("/chat", async (req, res) => {
     // For now, return a simple response to test if the endpoint works
     console.log("API_KEY exists:", !!process.env.API_KEY);
     
+    // TEMPORARY: Always return a simple response for testing
+    console.log("Returning test response for:", userInput);
+    return res.json({ 
+      response: `Hello! I received your message: "${userInput}". The server is working! API_KEY exists: ${!!process.env.API_KEY}`
+    });
+
+    // COMMENTED OUT FOR TESTING - Uncomment when basic functionality works
+    /*
     if (!process.env.API_KEY) {
       console.log("API_KEY not found, returning fallback response");
       return res.json({ 
@@ -161,6 +169,7 @@ app.post("/chat", async (req, res) => {
     const response = await runChat(userInput);
     console.log("Sending response to client:", response);
     res.json({ response });
+    */
   } catch (error) {
     console.error("Error in chat endpoint:", error);
     res.status(500).json({ 
