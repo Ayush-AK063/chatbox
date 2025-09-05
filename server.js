@@ -112,6 +112,35 @@ app.get("/loader.gif", (req, res) => {
   res.sendFile(join(__dirname, 'loader.gif'));
 });
 
+// Diagnostics: verify env and make a minimal model call
+app.get("/diag", async (req, res) => {
+  try {
+    const keyExists = !!process.env.API_KEY;
+    const keyLen = process.env.API_KEY ? process.env.API_KEY.length : 0;
+
+    let sample;
+    if (keyExists) {
+      const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const r = await model.generateContent({ contents: [{ parts: [{ text: "ping" }] }] });
+      sample = r?.response?.text?.() || null;
+    }
+
+    res.json({
+      env: {
+        keyExists,
+        keyLen,
+        nodeEnv: process.env.NODE_ENV || null,
+      },
+      sample,
+    });
+  } catch (e) {
+    res.status(500).json({
+      error: 'diag_failed',
+      message: e?.message,
+    });
+  }
+});
+
 // Test endpoint to check if server is working
 app.post("/test", (req, res) => {
   console.log("Test endpoint called");
