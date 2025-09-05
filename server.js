@@ -1,6 +1,6 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { fileURLToPath } from 'url';  // To resolve __dirname in ES Modules
 import { dirname, join } from 'path'; // To resolve __dirname and join paths
 
@@ -21,7 +21,7 @@ if (!process.env.API_KEY) {
   throw new Error("API_KEY environment variable is required");
 }
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const ai = new GoogleGenerativeAI({ apiKey: process.env.API_KEY });
 
 // Function to run the chat and get a response
 async function runChat(userInput) {
@@ -50,36 +50,21 @@ async function runChat(userInput) {
     ];
 
     const generationConfig = {
-      temperature: 0.9,
-      topK: 1,
-      topP: 1,
-      maxOutputTokens: 1000,
+      temperature: 0.8,
+      maxOutputTokens: 512,
     };
-
-    const safetySettings = [
-      {
-        category: "HARM_CATEGORY_HARASSMENT", // Adjust as per available constants
-        threshold: "BLOCK_MEDIUM_AND_ABOVE", // Adjust based on settings
-      },
-      // Add more safety settings if needed
-    ];
 
     // Get the model
     const model = ai.getGenerativeModel({ 
-      model: "gemini-2.0-flash",
+      model: "gemini-1.5-flash",
       generationConfig: generationConfig,
-      safetySettings: safetySettings,
     });
 
     // Start a chat session with history
-    const chat = model.startChat({
-      history: history,
-    });
+    const chat = model.startChat({ history });
 
     // Send the user input and get response
     const result = await chat.sendMessage(userInput);
-    console.log("Full result object:", JSON.stringify(result, null, 2));
-
     // Extract the response text properly
     const response = result.response.text();
     console.log("Generated response:", response);
@@ -147,21 +132,11 @@ app.post("/chat", async (req, res) => {
       return res.status(400).json({ error: "Invalid request body" });
     }
 
-    // For now, return a simple response to test if the endpoint works
-    console.log("API_KEY exists:", !!process.env.API_KEY);
-    
-    // TEMPORARY: Always return a simple response for testing
-    console.log("Returning test response for:", userInput);
-    return res.json({ 
-      response: `Hello! I received your message: "${userInput}". The server is working! API_KEY exists: ${!!process.env.API_KEY}`
-    });
-
-    // COMMENTED OUT FOR TESTING - Uncomment when basic functionality works
-    /*
+    // If API key missing, return helpful message
     if (!process.env.API_KEY) {
       console.log("API_KEY not found, returning fallback response");
       return res.json({ 
-        response: "Hello! I'm working, but the API key is not configured. Please check your environment variables in Vercel."
+        response: "Hello! I'm working, but the API key is not configured. Please set API_KEY in Vercel project settings."
       });
     }
 
@@ -169,7 +144,6 @@ app.post("/chat", async (req, res) => {
     const response = await runChat(userInput);
     console.log("Sending response to client:", response);
     res.json({ response });
-    */
   } catch (error) {
     console.error("Error in chat endpoint:", error);
     res.status(500).json({ 
