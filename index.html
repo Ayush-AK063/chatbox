@@ -162,11 +162,17 @@
         console.log('Response status:', response.status);
         console.log('Response ok:', response.ok);
 
-        const data = await response.json();
+        let data;
+        try {
+          data = await response.json();
+        } catch (e) {
+          data = null;
+        }
         console.log('Full response data:', data);
         
         if (!response.ok) {
-          throw new Error(data.error || 'Server error');
+          const details = data && (data.details || data.error || data.response);
+          throw new Error(details || `Server error (HTTP ${response.status})`);
         }
         
         const botMessage = data.response;
